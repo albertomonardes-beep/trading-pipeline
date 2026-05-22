@@ -1,0 +1,34 @@
+name: Monthly Ticker Refresh
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'  # Dia 1 de cada mes a las 6am UTC
+  workflow_dispatch:       # permite ejecucion manual desde GitHub
+
+jobs:
+  refresh-tickers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Setup DB (crea colecciones si no existen)
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: python scripts/setup_db.py
+
+      - name: Refresh ticker universe
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: python scripts/load_tickers.py

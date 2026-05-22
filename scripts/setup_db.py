@@ -16,15 +16,15 @@ def setup_collections():
         db.tickers.create_index("ticker", unique=True)
         print("Coleccion 'tickers' creada")
 
-    if "weekly_prices" not in db.list_collection_names():
-        db.create_collection("weekly_prices")
-        db.weekly_prices.create_index("ticker", unique=True)
-        print("Coleccion 'weekly_prices' creada")
-
     if "market_data" not in db.list_collection_names():
         db.create_collection("market_data")
         db.market_data.create_index("ticker", unique=True)
         print("Coleccion 'market_data' creada")
+
+    if "weekly_snapshot" not in db.list_collection_names():
+        db.create_collection("weekly_snapshot")
+        db.weekly_snapshot.create_index("ticker", unique=True)
+        print("Coleccion 'weekly_snapshot' creada")
 
     print("Base de datos lista")
 

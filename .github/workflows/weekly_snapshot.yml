@@ -1,0 +1,39 @@
+name: Weekly Snapshot
+
+on:
+  schedule:
+    - cron: '0 10 * * 6'  # Sabado 10am UTC (tras el cierre del viernes en NY)
+  workflow_dispatch:        # permite ejecucion manual desde GitHub
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360   # 6h max (proceso largo por ~9000 tickers)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Setup DB (crea colecciones si no existen)
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: python scripts/setup_db.py
+
+      - name: Fetch market data
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: python scripts/fetch_market_data.py
+
+      - name: Fetch weekly snapshot
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        run: python scripts/fetch_weekly_snapshot.py
