@@ -187,11 +187,27 @@ Logica interna:
 - Campos no disponibles quedan como `null`; el script no interrumpe por errores de un ticker
 
 ### `app.py`
-Interfaz Streamlit que muestra el contenido de `weekly_snapshot` en una tabla interactiva con todas las columnas definidas.
+Punto de entrada de la app. Define la navegacion entre las 2 paginas usando `st.navigation` (Streamlit >= 1.28).
 
 ```bash
 streamlit run app.py
 ```
+
+### `pages/nivel_instrumento.py`
+Pagina principal — Nivel 2. Tabla interactiva con todos los instrumentos del `weekly_snapshot` y filtros por cada campo:
+
+- **Tipo**: Todos / Solo acciones / Solo ETFs
+- **Broker**: Capital.com, Pepperstone
+- **Mercado**: Exchange, Sector, Sub-sector
+- **Tecnico**: Precio, EMA21, SMA50, SMA200, Volumen, Market Cap
+- **Crecimiento**: Crec. Ingresos, Crec. Ganancias, Crec. FCF
+- **Fundamentales**: Ingresos / Ganancias / FCF (A1, A2, A3)
+- **Ratios**: ROE, P/E, PEG, Deuda/Patrimonio, Current Ratio
+
+Muestra el conteo de instrumentos activos vs total. Boton "Limpiar filtros" para resetear.
+
+### `pages/nivel_mercado.py`
+Pagina secundaria — Nivel 1. Placeholder en construccion. Aqui ira el analisis de condiciones generales de mercado (VIX, SPY, QQQ, ETFs sectoriales).
 
 ---
 
@@ -212,12 +228,12 @@ Ambos workflows tienen `workflow_dispatch` para ejecucion manual desde GitHub.
 
 ---
 
-## Logica de filtrado (pendiente)
+## Logica de filtrado
 
-Dos niveles:
+Dos niveles implementados como paginas independientes en la app:
 
-1. **Nivel mercado**: analisis de condiciones generales por sector y sub-sector (VIX, SPY, ETFs sectoriales)
-2. **Nivel instrumento**: revision manual sobre la tabla Streamlit
+1. **Nivel mercado** (`pages/nivel_mercado.py`) — analisis de condiciones generales por sector y sub-sector (VIX, SPY, ETFs sectoriales). Pendiente de implementar.
+2. **Nivel instrumento** (`pages/nivel_instrumento.py`) — tabla con todos los instrumentos y filtros por cada campo. Implementado y listo.
 
 Resultado: watchlist semanal de 4-5 instrumentos.
 
@@ -280,8 +296,12 @@ streamlit==1.35.0
   - [x] Crecimientos de revenue, earnings y FCF
   - [x] ROE, P/E, PEG, Debt/Equity, Current Ratio
 - [x] GitHub Actions scheduler (semanal + mensual)
-- [x] Interfaz Streamlit (`app.py`)
-- [ ] Logica de nivel 1: analisis de mercado por sector/sub-sector
+- [x] Interfaz Streamlit — 2 paginas independientes
+  - [x] Nivel Instrumento: tabla con filtros por todos los campos (`pages/nivel_instrumento.py`)
+  - [x] Nivel Mercado: placeholder creado (`pages/nivel_mercado.py`)
+- [ ] Primera carga de datos en MongoDB (ejecutar workflows manualmente)
+- [ ] Deploy en Streamlit Community Cloud
+- [ ] Nivel 1: logica de analisis de mercado por sector/sub-sector
 
 ---
 
