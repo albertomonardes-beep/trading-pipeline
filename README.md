@@ -273,11 +273,11 @@ pip install -r requirements.txt
 ```
 
 ```
-pymongo==4.7.2
-requests==2.32.3
-pandas==2.2.2
-yfinance==0.2.40
-streamlit==1.35.0
+pymongo>=4.7.2
+requests>=2.32.3
+pandas>=2.2.2
+yfinance>=0.2.54
+streamlit>=1.35.0
 ```
 
 ---
