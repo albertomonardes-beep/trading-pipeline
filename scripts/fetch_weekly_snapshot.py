@@ -30,7 +30,8 @@ from setup_db import get_db
 
 # --- Configuracion ---
 BATCH_SIZE            = 100   # tickers por lote en descarga de precios
-DELAY_BETWEEN_BATCHES = 3     # segundos entre lotes (respetar rate limit de Yahoo)
+DELAY_BETWEEN_BATCHES = 5     # segundos entre lotes (respetar rate limit de Yahoo)
+DELAY_FUNDAMENTALS    = 1     # segundos entre llamadas individuales de fundamentales
 HISTORY_PERIOD        = "1y"  # suficiente para calcular SMA200 diaria (~252 dias habiles)
 INTERVAL              = "1d"
 
@@ -257,6 +258,7 @@ def process_batch(
             pass
 
         # --- Fundamentales ---
+        time.sleep(DELAY_FUNDAMENTALS)
         fundamentals = fetch_fundamentals(symbol)
         doc.update(fundamentals)
 
