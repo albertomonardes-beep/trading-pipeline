@@ -301,7 +301,7 @@ streamlit==1.35.0
   - [x] Nivel Mercado: placeholder creado (`pages/nivel_mercado.py`)
 - [ ] Primera carga de datos en MongoDB (ejecutar workflows manualmente)
 - [ ] Deploy en Streamlit Community Cloud
-- [ ] Nivel 1: logica de analisis de mercado por sector/sub-sector
+- [x] Nivel 1: logica de analisis de mercado por sector/sub-sector
 
 ---
 
