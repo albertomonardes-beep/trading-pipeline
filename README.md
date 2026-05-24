@@ -207,7 +207,12 @@ Pagina principal — Nivel 2. Tabla interactiva con todos los instrumentos del `
 Muestra el conteo de instrumentos activos vs total. Boton "Limpiar filtros" para resetear.
 
 ### `pages/nivel_mercado.py`
-Pagina secundaria — Nivel 1. Placeholder en construccion. Aqui ira el analisis de condiciones generales de mercado (VIX, SPY, QQQ, ETFs sectoriales).
+Pagina secundaria — Nivel 1. Analisis de condiciones generales de mercado. Muestra:
+
+- **Senal general**: FAVORABLE / NEUTRAL / DESFAVORABLE, calculada en base a VIX y posicion del mercado respecto a SMA200
+- **VIX**: valor actual con interpretacion por rangos (calma / normal / precaucion / miedo / miedo extremo)
+- **Mercado amplio**: tabla con SPY, QQQ, DIA, IWM — precio, variacion semanal y flags vs EMA21 / SMA50 / SMA200
+- **Sectores SPDR**: tabla con los 11 ETFs sectoriales ordenados por variacion semanal, con flags de medias moviles
 
 ---
 
@@ -232,7 +237,7 @@ Ambos workflows tienen `workflow_dispatch` para ejecucion manual desde GitHub.
 
 Dos niveles implementados como paginas independientes en la app:
 
-1. **Nivel mercado** (`pages/nivel_mercado.py`) — analisis de condiciones generales por sector y sub-sector (VIX, SPY, ETFs sectoriales). Pendiente de implementar.
+1. **Nivel mercado** (`pages/nivel_mercado.py`) — senal general de mercado (FAVORABLE / NEUTRAL / DESFAVORABLE) basada en VIX y medias moviles de SPY/QQQ/DIA/IWM. Tabla de sectores SPDR ordenada por variacion semanal. Implementado y listo.
 2. **Nivel instrumento** (`pages/nivel_instrumento.py`) — tabla con todos los instrumentos y filtros por cada campo. Implementado y listo.
 
 Resultado: watchlist semanal de 4-5 instrumentos.
@@ -299,8 +304,8 @@ streamlit==1.35.0
 - [x] Interfaz Streamlit — 2 paginas independientes
   - [x] Nivel Instrumento: tabla con filtros por todos los campos (`pages/nivel_instrumento.py`)
   - [x] Nivel Mercado: placeholder creado (`pages/nivel_mercado.py`)
-- [ ] Primera carga de datos en MongoDB (ejecutar workflows manualmente)
-- [ ] Deploy en Streamlit Community Cloud
+- [x] Primera carga de datos en MongoDB (workflows ejecutados manualmente — 2026-05-24)
+- [x] Deploy en Streamlit Community Cloud
 - [x] Nivel 1: logica de analisis de mercado por sector/sub-sector
 
 ---
