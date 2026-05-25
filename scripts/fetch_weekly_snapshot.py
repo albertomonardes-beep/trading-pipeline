@@ -257,12 +257,10 @@ def process_batch(
         except Exception:
             pass
 
-        # --- Fundamentales (solo acciones, no ETFs) ---
-        # Los ETFs no tienen P/E, revenue, earnings ni FCF — se omite la llamada
-        if not meta.get("is_etf", False):
-            time.sleep(DELAY_FUNDAMENTALS)
-            fundamentals = fetch_fundamentals(symbol)
-            doc.update(fundamentals)
+        # --- Fundamentales ---
+        time.sleep(DELAY_FUNDAMENTALS)
+        fundamentals = fetch_fundamentals(symbol)
+        doc.update(fundamentals)
 
         # --- Crecimientos ---
         for field in ("revenue", "earnings", "fcf"):
