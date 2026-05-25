@@ -183,7 +183,8 @@ Logica interna:
 - Calcula EMA21, SMA50, SMA200 desde historico; guarda solo el valor actual
 - Descarga fundamentales anuales via `ticker.info`, `income_stmt`, `cashflow`
 - FCF calculado como OCF + |CapEx| (CapEx viene negativo en yfinance)
-- Delay de 3s entre lotes para respetar rate limit de Yahoo Finance
+- Delay de 5s entre lotes y 2s entre llamadas individuales de fundamentales (rate limit Yahoo Finance)
+- Tiempo estimado de ejecucion completa: ~5 horas para ~9.000 tickers
 - Campos no disponibles quedan como `null`; el script no interrumpe por errores de un ticker
 
 ### `app.py`
@@ -223,6 +224,8 @@ Se ejecuta cada sabado a las 10am UTC (tras el cierre del viernes en NY). Orden 
 1. `setup_db.py`
 2. `fetch_market_data.py`
 3. `fetch_weekly_snapshot.py`
+
+Timeout maximo: 360 minutos (6 horas). Logs en tiempo real via `PYTHONUNBUFFERED=1`.
 
 ### `monthly_tickers.yml`
 Se ejecuta el dia 1 de cada mes a las 6am UTC:
@@ -303,7 +306,7 @@ streamlit>=1.35.0
 - [x] GitHub Actions scheduler (semanal + mensual)
 - [x] Interfaz Streamlit — 2 paginas independientes
   - [x] Nivel Instrumento: tabla con filtros por todos los campos (`pages/nivel_instrumento.py`)
-  - [x] Nivel Mercado: placeholder creado (`pages/nivel_mercado.py`)
+  - [x] Nivel Mercado: implementado con senal general, VIX, mercado amplio y sectores (`pages/nivel_mercado.py`)
 - [x] Primera carga de datos en MongoDB (workflows ejecutados manualmente — 2026-05-24)
 - [x] Deploy en Streamlit Community Cloud
 - [x] Nivel 1: logica de analisis de mercado por sector/sub-sector
@@ -318,3 +321,4 @@ streamlit>=1.35.0
 - **Velas diarias**: precios e indicadores tecnicos en temporalidad diaria (swing trading). Historico de 1 ano suficiente para calcular SMA200.
 - **Brokers sin API**: la disponibilidad en Capital.com y Pepperstone se resuelve con un lookup en archivos CSV locales. No se requiere scraping ni API key. El usuario actualiza los CSV cuando cambia la oferta de los brokers.
 - **Tickers desde NASDAQ Trader**: fuente publica y gratuita que cubre NYSE, NASDAQ, AMEX y ETFs. Se descargan directamente sin intermediarios.
+- **Rate limiting Yahoo Finance**: los precios se descargan en bulk (100 tickers por llamada). Los fundamentales requieren llamadas individuales; se usa un delay de 2s por ticker para evitar bloqueos (429 / respuesta vacia). Tiempo total estimado del workflow semanal: ~5 horas.
