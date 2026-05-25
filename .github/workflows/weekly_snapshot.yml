@@ -26,14 +26,17 @@ jobs:
       - name: Setup DB (crea colecciones si no existen)
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: python scripts/setup_db.py
+          PYTHONUNBUFFERED: "1"
+        run: python -u scripts/setup_db.py
 
       - name: Fetch market data
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: python scripts/fetch_market_data.py
+          PYTHONUNBUFFERED: "1"
+        run: python -u scripts/fetch_market_data.py
 
       - name: Fetch weekly snapshot
         env:
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
-        run: python scripts/fetch_weekly_snapshot.py
+          PYTHONUNBUFFERED: "1"
+        run: python -u scripts/fetch_weekly_snapshot.py
