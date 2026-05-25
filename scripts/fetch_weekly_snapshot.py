@@ -31,9 +31,7 @@ from setup_db import get_db
 # --- Configuracion ---
 BATCH_SIZE            = 100   # tickers por lote en descarga de precios
 DELAY_BETWEEN_BATCHES = 5     # segundos entre lotes (respetar rate limit de Yahoo)
-DELAY_FUNDAMENTALS    = 1.5   # segundos entre llamadas individuales de fundamentales
-RETRY_WAIT            = 20    # segundos de espera al detectar rate limit
-MAX_RETRIES           = 2     # reintentos por ticker ante respuesta vacia
+DELAY_FUNDAMENTALS    = 0.5   # segundos entre llamadas individuales de fundamentales
 HISTORY_PERIOD        = "1y"  # suficiente para calcular SMA200 diaria (~252 dias habiles)
 INTERVAL              = "1d"
 
@@ -108,75 +106,63 @@ def _get_annual_values(df: pd.DataFrame, row_name: str, n: int = 3) -> list | No
 def fetch_fundamentals(symbol: str) -> dict:
     """
     Descarga datos fundamentales de un ticker via yfinance.
-    Reintenta hasta MAX_RETRIES veces si Yahoo devuelve respuesta vacia (rate limit suave).
-    Devuelve un dict con los campos disponibles; campos no disponibles se omiten.
+    Si Yahoo no responde o devuelve datos vacios, retorna dict vacio y continua.
     """
-    for attempt in range(MAX_RETRIES + 1):
-        result = {}
+    result = {}
+    try:
+        t    = yf.Ticker(symbol)
+        info = t.info or {}
+
+        # --- Datos de info ---
+        def _safe(key, divisor=1, decimals=4):
+            v = info.get(key)
+            if v is None or not isinstance(v, (int, float)):
+                return None
+            return round(v / divisor, decimals)
+
+        result["sector"]        = info.get("sector")   or None
+        result["industry"]      = info.get("industry") or None
+        result["market_cap"]    = _safe("marketCap", divisor=1_000_000, decimals=2)
+        result["pe"]            = _safe("trailingPE")
+        result["peg"]           = _safe("pegRatio")
+        result["roe"]           = _safe("returnOnEquity")
+        result["debt_equity"]   = _safe("debtToEquity")
+        result["current_ratio"] = _safe("currentRatio")
+
+        # --- Income statement anual ---
         try:
-            t    = yf.Ticker(symbol)
-            info = t.info or {}
+            stmt = t.income_stmt
+        except AttributeError:
+            stmt = t.financials  # compatibilidad versiones anteriores
 
-            # Respuesta vacia = rate limit suave → esperar y reintentar
-            if not info and attempt < MAX_RETRIES:
-                print(f"    [retry {attempt+1}] {symbol} — respuesta vacia, esperando {RETRY_WAIT}s")
-                time.sleep(RETRY_WAIT)
-                continue
+        revenue  = _get_annual_values(stmt, "Total Revenue")
+        earnings = _get_annual_values(stmt, "Net Income")
+        if revenue:
+            result["revenue"] = revenue
+        if earnings:
+            result["earnings"] = earnings
 
-            # --- Datos de info ---
-            def _safe(key, divisor=1, decimals=4):
-                v = info.get(key)
-                if v is None or not isinstance(v, (int, float)):
-                    return None
-                return round(v / divisor, decimals)
-
-            result["sector"]        = info.get("sector")   or None
-            result["industry"]      = info.get("industry") or None
-            result["market_cap"]    = _safe("marketCap", divisor=1_000_000, decimals=2)
-            result["pe"]            = _safe("trailingPE")
-            result["peg"]           = _safe("pegRatio")
-            result["roe"]           = _safe("returnOnEquity")
-            result["debt_equity"]   = _safe("debtToEquity")
-            result["current_ratio"] = _safe("currentRatio")
-
-            # --- Income statement anual ---
-            try:
-                stmt = t.income_stmt
-            except AttributeError:
-                stmt = t.financials  # compatibilidad versiones anteriores
-
-            revenue  = _get_annual_values(stmt, "Total Revenue")
-            earnings = _get_annual_values(stmt, "Net Income")
-            if revenue:
-                result["revenue"] = revenue
-            if earnings:
-                result["earnings"] = earnings
-
-            # --- Cash flow anual: FCF = OCF - |CapEx| ---
-            try:
-                cf = t.cashflow
-                if cf is not None and not cf.empty:
-                    ocf_key   = "Operating Cash Flow"
-                    capex_key = "Capital Expenditure"
-                    if ocf_key in cf.index and capex_key in cf.index:
-                        ocf   = cf.loc[ocf_key].dropna()
-                        capex = cf.loc[capex_key].dropna()
-                        common_dates = ocf.index.intersection(capex.index)[:3]
-                        if len(common_dates) > 0:
-                            fcf = [
-                                round((ocf[d] + abs(capex[d])) / 1_000_000, 2)
-                                for d in common_dates
-                            ]
-                            result["fcf"] = fcf
-            except Exception:
-                pass
-
-            return result
-
+        # --- Cash flow anual: FCF = OCF - |CapEx| ---
+        try:
+            cf = t.cashflow
+            if cf is not None and not cf.empty:
+                ocf_key   = "Operating Cash Flow"
+                capex_key = "Capital Expenditure"
+                if ocf_key in cf.index and capex_key in cf.index:
+                    ocf   = cf.loc[ocf_key].dropna()
+                    capex = cf.loc[capex_key].dropna()
+                    common_dates = ocf.index.intersection(capex.index)[:3]
+                    if len(common_dates) > 0:
+                        fcf = [
+                            round((ocf[d] + abs(capex[d])) / 1_000_000, 2)
+                            for d in common_dates
+                        ]
+                        result["fcf"] = fcf
         except Exception:
-            if attempt < MAX_RETRIES:
-                time.sleep(RETRY_WAIT)
-                continue
+            pass
+
+    except Exception:
+        pass
 
     return result
 
