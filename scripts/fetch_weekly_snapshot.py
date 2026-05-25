@@ -31,7 +31,7 @@ from setup_db import get_db
 # --- Configuracion ---
 BATCH_SIZE            = 100   # tickers por lote en descarga de precios
 DELAY_BETWEEN_BATCHES = 5     # segundos entre lotes (respetar rate limit de Yahoo)
-DELAY_FUNDAMENTALS    = 0.5   # segundos entre llamadas individuales de fundamentales
+DELAY_FUNDAMENTALS    = 2.0   # segundos entre llamadas individuales de fundamentales
 HISTORY_PERIOD        = "1y"  # suficiente para calcular SMA200 diaria (~252 dias habiles)
 INTERVAL              = "1d"
 
@@ -257,10 +257,12 @@ def process_batch(
         except Exception:
             pass
 
-        # --- Fundamentales ---
-        time.sleep(DELAY_FUNDAMENTALS)
-        fundamentals = fetch_fundamentals(symbol)
-        doc.update(fundamentals)
+        # --- Fundamentales (solo acciones, no ETFs) ---
+        # Los ETFs no tienen P/E, revenue, earnings ni FCF — se omite la llamada
+        if not meta.get("is_etf", False):
+            time.sleep(DELAY_FUNDAMENTALS)
+            fundamentals = fetch_fundamentals(symbol)
+            doc.update(fundamentals)
 
         # --- Crecimientos ---
         for field in ("revenue", "earnings", "fcf"):
